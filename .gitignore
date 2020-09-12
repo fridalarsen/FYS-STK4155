@@ -1,3 +1,7 @@
+# Custom files to ignore
+Project1/data.npy
+
+
 
 # Created by https://www.toptal.com/developers/gitignore/api/python,tex,latex
 # Edit at https://www.toptal.com/developers/gitignore?templates=python,tex,latex
