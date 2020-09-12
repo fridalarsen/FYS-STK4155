@@ -1,5 +1,6 @@
 # Custom files to ignore
 Project1/data.npy
+*.DS_Store 
 
 
 
