@@ -43,6 +43,38 @@ def design_matrix_column_order(n=1):
                 l += 1
     return column_names
 
+# import data
+data = np.load("data.npy")
+x, y, z = data.T
+
+n = len(z)
+sigma2 = np.var(z)
+z_mean = (1/n)*np.sum(z)
+
+beta_variance = []
+MSE = []
+R2 = []
+
+# perform OLS
+N = 5
+for i in range(0, N):
+    X = design_matrix(x, y, n=i)
+    beta = np.linalg.inv(((X.T)@X))@(X.T)@z
+
+    z_hat = X@beta
+
+    beta_variance.append(sigma2*np.linalg.inv((X.T)@X))
+    MSE.append((1/n)*np.sum((z - z_hat)**2))
+    R2.append(1 - (np.sum((z - z_hat)**2)) / (np.sum((z - z_mean)**2)))
+
+
+
+
+
+
+
+
+
 
 
 
