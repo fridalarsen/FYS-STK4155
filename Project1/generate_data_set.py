@@ -1,6 +1,6 @@
 import numpy as np
 
-def FrankeFunction(x,y):
+def FrankeFunction(x, y):
     """
     Function for computing the Franke function.
     Arguments:
@@ -15,23 +15,29 @@ def FrankeFunction(x,y):
     term4 = -0.2*np.exp(-(9*x-4)**2 - (9*y-7)**2)
     return term1 + term2 + term3 + term4
 
-# make coordinate grid
-N = 25
-x = np.linspace(0, 1, N)
-y = np.linspace(0, 1, N)
-X, Y = np.meshgrid(x,y)
+def generate_data_set(N, sigma):
+    """
+    Function for generating a data set based on the Franke function with noise.
+    Arguments:
+        N (int): number of data points to generate
+        sigma (float): standard deviation of noise
+    Returns:
 
-# make surface
-Z = FrankeFunction(X, Y)
+    """
+    # make coordinate grid
+    x = np.linspace(0, 1, N)
+    y = np.linspace(0, 1, N)
+    X, Y = np.meshgrid(x,y)
 
-# make 1d-arrays
-x = X.flatten()
-y = Y.flatten()
-z = Z.flatten()
+    # make surface
+    Z = FrankeFunction(X, Y)
 
-# add noise
-z = z + np.random.randn(len(z))
+    # make 1d-arrays
+    x = X.flatten()
+    y = Y.flatten()
+    z = Z.flatten()
 
-# save data
-data = np.c_[x, y, z]
-np.save("data.npy", data)
+    # add noise
+    z = z + sigma*np.random.randn(len(z))
+
+    return x, y, z

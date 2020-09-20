@@ -2,6 +2,7 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
+from generate_data_set import generate_data_set
 
 def design_matrix(x, y, n=1, incl_ones=False):
     """
@@ -99,10 +100,8 @@ def MSE_R2(pred, true):
     return MSE, R2
 
 if __name__ == "__main__":
-
-    # import data
-    data = np.load("data.npy")
-    x, y, z = data.T
+    # create data
+    x, y, z = generate_data_set(25, 1)
 
     # standardizing response
     z_var = np.var(z)
@@ -141,7 +140,6 @@ if __name__ == "__main__":
         # quality check
         MSE_train[i-1], R2_train[i-1] = MSE_R2(z_hat_train, z_train)
         MSE_test[i-1], R2_test[i-1] = MSE_R2(z_hat_test, z_test)
-
 
     complexity = np.linspace(1, N, N)
     plt.plot(complexity, MSE_test, label="Test Sample")
