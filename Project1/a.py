@@ -97,65 +97,48 @@ def MSE_R2(pred, true):
 
     return MSE, R2
 
-# import data
-data = np.load("data.npy")
-x, y, z = data.T
+if __name__ == "__main__":
 
-# standardizing response
-z_var = np.var(z)
-z_mean = np.mean(z)
+    # import data
+    data = np.load("data.npy")
+    x, y, z = data.T
 
-z = (z-z_mean)/np.sqrt(z_var)
+    # standardizing response
+    z_var = np.var(z)
+    z_mean = np.mean(z)
 
-# perform OLS
-N = 5
+    z = (z-z_mean)/np.sqrt(z_var)
 
-beta_variance = []
-MSE = np.zeros(N)
-R2 = np.zeros(N)
+    # perform OLS
+    N = 5
 
-for i in range(1, N+1):
-    # preparing data
-    X = design_matrix(x, y, n=i)
-    X_train, X_test, z_train, z_test = train_test_split(X, z, test_size=0.25)
+    beta_variance = []
+    MSE = np.zeros(N)
+    R2 = np.zeros(N)
 
-    # preprocessing data
-    scaler = StandardScaler()
-    scaler.fit(X_train)
-    X_train = scaler.transform(X_train)
-    X_test = scaler.transform(X_test)
+    for i in range(1, N+1):
+        # preparing data
+        X = design_matrix(x, y, n=i)
+        X_train, X_test, z_train, z_test = train_test_split(X, z, test_size=0.25)
 
-    # fit
-    beta, beta_var = LinearRegression(X_train, z_train, r_var=1)
-    beta_variance.append(beta_var)
+        # preprocessing data
+        scaler = StandardScaler()
+        scaler.fit(X_train)
+        X_train = scaler.transform(X_train)
+        X_test = scaler.transform(X_test)
 
-    # predict
-    z_hat = X_test@beta
+        # fit
+        beta, beta_var = LinearRegression(X_train, z_train, r_var=1)
+        beta_variance.append(beta_var)
 
-    # quality check
-    MSE[i-1], R2[i-1] = MSE_R2(z_hat, z_test)
+        # predict
+        z_hat = X_test@beta
 
-    print(f"Degree {i}")
-    print(f"Beta: {beta}")
-    print(f"Variance: {beta_variance[i-1]}")
-    print(f"MSE: {MSE[i-1]}")
-    print(f"R^2: {R2[i-1]}")
-    print()
-    print()
+        # quality check
+        MSE[i-1], R2[i-1] = MSE_R2(z_hat, z_test)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# y0
+        print(f"Degree {i}")
+        print(f"Beta: {beta}")
+        print(f"Variance: {beta_variance[i-1]}")
+        print(f"MSE: {MSE[i-1]}")
+        print(f"R^2: {R2[i-1]}")
