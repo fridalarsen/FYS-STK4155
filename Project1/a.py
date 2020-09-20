@@ -73,8 +73,9 @@ def LinearRegression(X, r, r_var=None):
         r_var = np.var(r)
 
     XTX_inv = np.linalg.inv((X.T)@X)
+    beta = np.linalg.pinv(X)@r
 
-    beta = XTX_inv@((X.T)@r)
+    #beta = XTX_inv@((X.T)@r)
     r_pred = X@beta
 
     beta_var = r_var*np.diag(XTX_inv)
@@ -110,16 +111,18 @@ if __name__ == "__main__":
     z = (z-z_mean)/np.sqrt(z_var)
 
     # perform OLS
-    N = 5
+    N = 20
 
     beta_variance = []
-    MSE = np.zeros(N)
-    R2 = np.zeros(N)
+    MSE_test = np.zeros(N)
+    MSE_train = np.zeros(N)
+    R2_test = np.zeros(N)
+    R2_train = np.zeros(N)
 
     for i in range(1, N+1):
         # preparing data
         X = design_matrix(x, y, n=i)
-        X_train, X_test, z_train, z_test = train_test_split(X, z, test_size=0.25)
+        X_train, X_test, z_train, z_test = train_test_split(X, z, test_size=0.35)
 
         # preprocessing data
         scaler = StandardScaler()
@@ -132,13 +135,21 @@ if __name__ == "__main__":
         beta_variance.append(beta_var)
 
         # predict
-        z_hat = X_test@beta
+        z_hat_train = X_train@beta
+        z_hat_test = X_test@beta
 
         # quality check
-        MSE[i-1], R2[i-1] = MSE_R2(z_hat, z_test)
+        MSE_train[i-1], R2_train[i-1] = MSE_R2(z_hat_train, z_train)
+        MSE_test[i-1], R2_test[i-1] = MSE_R2(z_hat_test, z_test)
 
-        print(f"Degree {i}")
-        print(f"Beta: {beta}")
-        print(f"Variance: {beta_variance[i-1]}")
-        print(f"MSE: {MSE[i-1]}")
-        print(f"R^2: {R2[i-1]}")
+
+    complexity = np.linspace(1, N, N)
+    plt.plot(complexity, MSE_test, label="Test Sample")
+    plt.plot(complexity, MSE_train, label="Training Sample")
+    plt.legend()
+    plt.yscale("log")
+    plt.xlabel("Model Complexity", fontsize=12)
+    plt.ylabel("Mean Squared Error", fontsize=12)
+    plt.title("Model Complexity Optimization", fontsize=15)
+    plt.savefig("Figures/b_1.png", dpi=300)
+    plt.show()

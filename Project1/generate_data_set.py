@@ -16,8 +16,9 @@ def FrankeFunction(x,y):
     return term1 + term2 + term3 + term4
 
 # make coordinate grid
-x = np.linspace(0, 1, 1500)
-y = np.linspace(0, 1, 1500)
+N = 25
+x = np.linspace(0, 1, N)
+y = np.linspace(0, 1, N)
 X, Y = np.meshgrid(x,y)
 
 # make surface
