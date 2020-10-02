@@ -202,5 +202,5 @@ if __name__ == "__main__":
     plt.xlabel("Model Complexity", fontsize=12)
     plt.ylabel("Mean Squared Error", fontsize=12)
     plt.title("Model Complexity Optimization", fontsize=15)
-    plt.savefig("Figures/b_1.png", dpi=300)
+    plt.savefig("Figures/model_complexity_mse_franke.png", dpi=300)
     plt.show()
