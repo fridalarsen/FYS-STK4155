@@ -1,4 +1,6 @@
 import numpy as np
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 
 def FrankeFunction(x, y):
     """
@@ -41,3 +43,21 @@ def generate_data_set(N, sigma):
     z = z + sigma*np.random.randn(len(z))
 
     return x, y, z
+
+if __name__ == "__main__":
+    # plot the Franke surface
+    x = np.linspace(0, 1, 100)
+    y = np.linspace(0, 1, 100)
+    X, Y = np.meshgrid(x,y)
+
+    Z = FrankeFunction(X,Y)
+
+    fig = plt.figure()
+    ax = plt.axes(projection="3d")
+    ax.plot_surface(X, Y, Z, cmap="autumn")
+    ax.set_title("The Franke function", fontsize=15)
+    ax.set_xlabel("x", fontsize=12)
+    ax.set_ylabel("y", fontsize=12)
+    ax.set_zlabel("z", fontsize=12)
+    plt.savefig("Figures/franke_function.png", dpi=300)
+    plt.show()
