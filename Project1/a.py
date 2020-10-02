@@ -2,7 +2,7 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
-from generate_data_set import generate_data_set
+from generate_data_set import generate_data_set, FrankeFunction
 
 def design_matrix(x, y, n=1, incl_ones=False):
     """
@@ -58,7 +58,29 @@ def design_matrix_column_order(n=1, incl_ones=False):
 
     return column_names
 
-def LinearRegression(X, r, r_var=None):
+def prep_surface(x, y, beta, deg):
+    """
+    Function for preparing the a surface plot based on a regression.
+    Arguments:
+        x (array): x-coordinates of surface
+        y (array): y-coordinates of surface
+        beta (array): regression coefficients
+        deg (int): polynomial degree
+    Returns:
+        X_surf (array): 2D x-coordinates of surface
+        Y_surf (array): 2D y-coordinates of surface
+        Z_surf (array): predicted 2D z-coordinates of surface
+    """
+    X_surf, Y_surf = np.meshgrid(x,y)
+
+    X_design = design_matrix(X_surf.flatten(), Y_surf.flatten(), n=deg)
+
+    z = (X_design@beta)
+    Z_surf = z.reshape(X_surf.shape)
+
+    return X_surf, Y_surf, Z_surf
+
+def LinearRegression(X, r, r_var=None, **kwargs):
     """
     Function for finding regression coefficients
     Arguments:
@@ -66,8 +88,9 @@ def LinearRegression(X, r, r_var=None):
         r (array): response vector
         r_var (float, optional): variance of response is calculated if none is
                                  provided, defaults to None
+        **kwargs: compatibility with RidgeRegression
     Returns:
-        beta (array): vector of coefficients
+        beta (array): regression coefficients
         beta_var (array): variance of beta values
     """
     if r_var is None:
@@ -76,7 +99,6 @@ def LinearRegression(X, r, r_var=None):
     XTX_inv = np.linalg.inv((X.T)@X)
     beta = np.linalg.pinv(X)@r
 
-    #beta = XTX_inv@((X.T)@r)
     r_pred = X@beta
 
     beta_var = r_var*np.diag(XTX_inv)
@@ -100,17 +122,17 @@ def MSE_R2(pred, true):
     return MSE, R2
 
 if __name__ == "__main__":
-    # create data
-    x, y, z = generate_data_set(25, 1)
+    # generate data
+    x, y, z = generate_data_set(int(5e2), 1)
 
-    # standardizing response
+    # standardize response
     z_var = np.var(z)
     z_mean = np.mean(z)
 
     z = (z-z_mean)/np.sqrt(z_var)
 
     # perform OLS
-    N = 20
+    N = 15
 
     beta_variance = []
     MSE_test = np.zeros(N)
@@ -119,11 +141,11 @@ if __name__ == "__main__":
     R2_train = np.zeros(N)
 
     for i in range(1, N+1):
-        # preparing data
+        # prepare data
         X = design_matrix(x, y, n=i)
         X_train, X_test, z_train, z_test = train_test_split(X, z, test_size=0.35)
 
-        # preprocessing data
+        # preprocess data
         scaler = StandardScaler()
         scaler.fit(X_train)
         X_train = scaler.transform(X_train)
@@ -141,11 +163,42 @@ if __name__ == "__main__":
         MSE_train[i-1], R2_train[i-1] = MSE_R2(z_hat_train, z_train)
         MSE_test[i-1], R2_test[i-1] = MSE_R2(z_hat_test, z_test)
 
+        # plot an example of the approximations
+        if i == 10:
+            x_surf = np.linspace(0, 1, 100)
+            y_surf = np.linspace(0, 1, 100)
+
+            X_surf, Y_surf, Z_surf = prep_surface(x_surf, y_surf,
+                                                     beta, deg=i)
+
+            fig = plt.figure()
+            ax = plt.axes(projection="3d")
+            ax.plot_surface(X_surf, Y_surf, Z_surf, cmap="autumn")
+            ax.set_title(f"Franke Function OLS approximation, deg={i}", fontsize=15)
+            ax.set_xlabel("x", fontsize=12)
+            ax.set_ylabel("y", fontsize=12)
+            ax.set_zlabel("z", fontsize=12)
+            plt.savefig(f"Figures/franke_OLS_deg{i}.png", dpi=300)
+            plt.show()
+
+            plt.imshow((Z_surf - FrankeFunction(X_surf, Y_surf))**2,
+                       cmap="RdYlGn", origin="lower",
+                       extent=[X_surf.min(), X_surf.max(), Y_surf.min(),
+                       Y_surf.max()])
+            plt.title(f"Difference between prediction and true value, deg={i}",
+                      fontsize=15)
+            plt.xlabel("x", fontsize=12)
+            plt.ylabel("y", fontsize=12)
+            cb = plt.colorbar()
+            cb.set_label(label="Squared error", fontsize=12)
+            plt.savefig(f"Figures/franke_OLS_error_deg{i}.png", dpi=300)
+            plt.show()
+
     complexity = np.linspace(1, N, N)
-    plt.plot(complexity, MSE_test, label="Test Sample")
-    plt.plot(complexity, MSE_train, label="Training Sample")
+    plt.plot(complexity, MSE_test, label="Test Sample", color="orange")
+    plt.plot(complexity, MSE_train, label="Training Sample", color="darkred")
     plt.legend()
-    plt.yscale("log")
+    plt.subplots_adjust(left=0.16)
     plt.xlabel("Model Complexity", fontsize=12)
     plt.ylabel("Mean Squared Error", fontsize=12)
     plt.title("Model Complexity Optimization", fontsize=15)
