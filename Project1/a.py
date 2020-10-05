@@ -164,7 +164,7 @@ if __name__ == "__main__":
         MSE_test[i-1], R2_test[i-1] = MSE_R2(z_hat_test, z_test)
 
         # plot an example of the approximations
-        if i == 10:
+        if i == 5:
             x_surf = np.linspace(0, 1, 100)
             y_surf = np.linspace(0, 1, 100)
 
