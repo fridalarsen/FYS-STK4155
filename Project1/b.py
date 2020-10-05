@@ -56,7 +56,7 @@ def bias_variance_tradeoff(X, z, B, model=LinearRegression, **kwargs):
 
 if __name__ == "__main__":
     max_deg = 10
-    N_points = [25, 30, 40]                              # number of data points
+    N_points = [25, 40, 100]                             # number of data points
     N_pol = np.linspace(1, max_deg, max_deg).astype(int) # polynomial degrees
 
     MSE = np.zeros([len(N_points), len(N_pol)])
@@ -85,26 +85,21 @@ if __name__ == "__main__":
             # do bootstrap
             MSE[i,j], bias[i,j], var[i,j] = bias_variance_tradeoff(X, z, 500)
 
-    plt.errorbar(N_pol, bias[0,:,0], yerr=bias[0,:,1], fmt="o", capsize=7,
-                 label="bias", color="darkorange")
-    plt.errorbar(N_pol, var[0,:,0], yerr=var[0,:,1], fmt="o", capsize=7,
-                 label="variance", color="brown")
-    plt.scatter(N_pol, MSE[0], marker="o", label="MSE", color="red")
-    plt.legend()
-    plt.title(f"Bias variance tradeoff, N={N_points[0]}", fontsize=15)
-    plt.xlabel("Polynomial degree", fontsize=12)
-    plt.ylabel(r"Error$^2$", fontsize=12)
-    plt.savefig(f"Figures/b-v_tradeoff_franke_N{N_points[0]}", dpi=300)
-    plt.show()
+        plt.errorbar(N_pol, bias[i,:,0], yerr=bias[i,:,1], fmt="o", capsize=7,
+                     label="bias", color="darkorange")
+        plt.errorbar(N_pol, var[i,:,0], yerr=var[i,:,1], fmt="o", capsize=7,
+                     label="variance", color="brown")
+        plt.scatter(N_pol, MSE[i], marker="o", label="MSE", color="red")
+        plt.legend()
+        plt.title(f"Bias variance tradeoff, N={N_points[i]}", fontsize=15)
+        plt.xlabel("Polynomial degree", fontsize=12)
+        plt.ylabel(r"Error$^2$", fontsize=12)
+        plt.savefig(f"Figures/b-v_tradeoff_franke_N{N_points[i]}.png", dpi=300)
+        plt.show()
 
-    plt.errorbar(N_pol, bias[-1,:,0], yerr=bias[-1,:,1], fmt="o", capsize=7,
-                 label="bias", color="darkorange")
-    plt.errorbar(N_pol, var[-1,:,0], yerr=var[-1,:,1], fmt="o", capsize=7,
-                 label="variance", color="brown")
-    plt.scatter(N_pol, MSE[-1], marker="o", label="MSE", color="red")
-    plt.legend()
-    plt.title(f"Bias variance tradeoff, N={N_points[-1]}", fontsize=15)
+    plt.scatter(N_pol, MSE[-1], marker="o", color="red")
+    plt.title(f"Model MSE, N={N_points[-1]}", fontsize=15)
     plt.xlabel("Polynomial degree", fontsize=12)
-    plt.ylabel(r"Error$^2$", fontsize=12)
-    plt.savefig(f"Figures/b-v_tradeoff_franke_N{N_points[-1]}", dpi=300)
+    plt.ylabel("MSE", fontsize=12)
+    plt.savefig(f"Figures/model_mse_OLS_N{N_points[-1]}.png", dpi=300)
     plt.show()
