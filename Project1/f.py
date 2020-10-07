@@ -14,10 +14,10 @@ plt.ylabel("y", fontsize=12)
 plt.savefig("Figures/terrain.png", dpi=300)
 plt.show()
 
-x = np.linspace(0, terrain.shape[0], terrain.shape[0])
-y = np.linspace(0, terrain.shape[1], terrain.shape[1])
+x = np.linspace(0, terrain.shape[1], terrain.shape[1])
+y = np.linspace(0, terrain.shape[0], terrain.shape[0])
 x, y = np.meshgrid(x, y)
-z = terrain.T
+z = terrain
 
 fig = plt.figure()
 ax = plt.axes(projection="3d")
