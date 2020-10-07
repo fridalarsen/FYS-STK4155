@@ -38,7 +38,7 @@ def design_matrix_column_order(n=1, incl_ones=False):
     Function for finding the order of the columns in the design matrix.
     Arguments:
         n (int, optional): order of polynomial, defaults to 1
-        incl_ones (bool, optional): incluces the 0th order column if True,
+        incl_ones (bool, optional): includes the 0th order column if True,
                                     defaults to False.
     Returns:
         column_names (list): list of column names
@@ -58,7 +58,7 @@ def design_matrix_column_order(n=1, incl_ones=False):
 
     return column_names
 
-def prep_surface(x, y, beta, deg):
+def prep_surface(x, y, beta, deg, scaler=None):
     """
     Function for preparing the a surface plot based on a regression.
     Arguments:
@@ -66,6 +66,8 @@ def prep_surface(x, y, beta, deg):
         y (array): y-coordinates of surface
         beta (array): regression coefficients
         deg (int): polynomial degree
+        scaler (StandardScaler, optional): fitted sklearn StandardScaler,
+                                           ignored if None
     Returns:
         X_surf (array): 2D x-coordinates of surface
         Y_surf (array): 2D y-coordinates of surface
@@ -75,7 +77,10 @@ def prep_surface(x, y, beta, deg):
 
     X_design = design_matrix(X_surf.flatten(), Y_surf.flatten(), n=deg)
 
-    z = (X_design@beta)
+    if scaler is not None:
+        X_design = scaler.transform(X_design)
+
+    z = X_design@beta
     Z_surf = z.reshape(X_surf.shape)
 
     return X_surf, Y_surf, Z_surf
