@@ -128,7 +128,8 @@ def MSE_R2(pred, true):
 
 if __name__ == "__main__":
     # generate data
-    x, y, z = generate_data_set(int(5e2), 1)
+    N_points = 25
+    x, y, z = generate_data_set(N_points, 1)
 
     # standardize response
     z_var = np.var(z)
@@ -137,7 +138,7 @@ if __name__ == "__main__":
     z = (z-z_mean)/np.sqrt(z_var)
 
     # perform OLS
-    N = 15
+    N = 15                                      # highest polynomial degree
 
     beta_variance = []
     MSE_test = np.zeros(N)
@@ -169,7 +170,7 @@ if __name__ == "__main__":
         MSE_test[i-1], R2_test[i-1] = MSE_R2(z_hat_test, z_test)
 
         # plot an example of the approximations
-        if i == 5:
+        if i == 5 or i == 10:
             x_surf = np.linspace(0, 1, 100)
             y_surf = np.linspace(0, 1, 100)
 
@@ -179,33 +180,34 @@ if __name__ == "__main__":
             fig = plt.figure()
             ax = plt.axes(projection="3d")
             ax.plot_surface(X_surf, Y_surf, Z_surf, cmap="autumn")
-            ax.set_title(f"Franke Function OLS approximation, deg={i}", fontsize=15)
+            ax.set_title(f"Franke Function OLS approximation,\n deg={i} and " \
+                         + f"N={N_points}", fontsize=15)
             ax.set_xlabel("x", fontsize=12)
             ax.set_ylabel("y", fontsize=12)
             ax.set_zlabel("z", fontsize=12)
-            plt.savefig(f"Figures/franke_OLS_deg{i}.png", dpi=300)
+            plt.savefig(f"Figures/franke_OLS_deg{i}_N{N_points}.png", dpi=300)
             plt.show()
 
             plt.imshow((Z_surf - FrankeFunction(X_surf, Y_surf))**2,
                        cmap="RdYlGn", origin="lower",
                        extent=[X_surf.min(), X_surf.max(), Y_surf.min(),
                        Y_surf.max()])
-            plt.title(f"Difference between prediction and true value, deg={i}",
-                      fontsize=15)
+            plt.title(f"Difference between prediction and true value,\n"\
+                      + f" deg={i} and N={N_points}", fontsize=15)
             plt.xlabel("x", fontsize=12)
             plt.ylabel("y", fontsize=12)
             cb = plt.colorbar()
             cb.set_label(label="Squared error", fontsize=12)
-            plt.savefig(f"Figures/franke_OLS_error_deg{i}.png", dpi=300)
+            plt.savefig(f"Figures/franke_OLS_error_deg{i}_N{N_points}.png", dpi=300)
             plt.show()
 
     complexity = np.linspace(1, N, N)
-    plt.plot(complexity, MSE_test, label="Test Sample", color="orange")
-    plt.plot(complexity, MSE_train, label="Training Sample", color="darkred")
+    plt.plot(complexity, MSE_test, label="Testing set", color="orange")
+    plt.plot(complexity, MSE_train, label="Training set", color="darkred")
     plt.legend()
     plt.subplots_adjust(left=0.16)
     plt.xlabel("Model Complexity", fontsize=12)
     plt.ylabel("Mean Squared Error", fontsize=12)
-    plt.title("Model Complexity Optimization", fontsize=15)
-    plt.savefig("Figures/model_complexity_mse_franke.png", dpi=300)
+    plt.title(f"Model Complexity Optimization, N={N_points}", fontsize=15)
+    plt.savefig(f"Figures/model_complexity_mse_franke_N{N_points}.png", dpi=300)
     plt.show()
