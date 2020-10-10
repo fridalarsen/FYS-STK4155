@@ -1,8 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler
-from generate_data_set import generate_data_set
-from a import design_matrix
+from sklearn.model_selection import train_test_split
+from generate_data_set import generate_data_set, FrankeFunction
+from a import design_matrix, prep_surface
 from b import bias_variance_tradeoff
 from c import kfold
 
@@ -95,3 +96,46 @@ if __name__ == "__main__":
                   fontsize=15)
         plt.savefig(f"Figures/ridge_kfold_deg{deg}.png", dpi=300)
         plt.show()
+
+# make an example approximation
+# prepare data
+X = design_matrix(x, y, n=5)
+X_train, X_test, z_train, z_test = train_test_split(X, z, test_size=0.35)
+
+# preprocess data
+scaler = StandardScaler()
+scaler.fit(X_train)
+X_train = scaler.transform(X_train)
+X_test = scaler.transform(X_test)
+
+# fit
+beta, beta_var = Ridge(X_train, z_train, lambda_=1e-2, r_var=1)
+
+x_surf = np.linspace(0, 1, 100)
+y_surf = np.linspace(0, 1, 100)
+
+X_surf, Y_surf, Z_surf = prep_surface(x_surf, y_surf, beta, deg=5)
+
+fig = plt.figure()
+ax = plt.axes(projection="3d")
+ax.plot_surface(X_surf, Y_surf, Z_surf, cmap="autumn")
+ax.set_title(f"Franke Function Ridge approximation,\n deg=5, " \
+             + f"N=100 and " + r"$\lambda=10^{-2}$", fontsize=15)
+ax.set_xlabel("x", fontsize=12)
+ax.set_ylabel("y", fontsize=12)
+ax.set_zlabel("z", fontsize=12)
+plt.savefig(f"Figures/franke_ridge_deg5_N100.png", dpi=300)
+plt.show()
+
+plt.imshow((Z_surf - FrankeFunction(X_surf, Y_surf))**2,
+           cmap="RdYlGn", origin="lower",
+           extent=[X_surf.min(), X_surf.max(), Y_surf.min(),
+           Y_surf.max()])
+plt.title(f"Difference between prediction and true value,\n"\
+          + f" deg=5, N=100 and " + r"$\lambda=10^{-2}$", fontsize=15)
+plt.xlabel("x", fontsize=12)
+plt.ylabel("y", fontsize=12)
+cb = plt.colorbar()
+cb.set_label(label="Squared error", fontsize=12)
+plt.savefig(f"Figures/franke_ridge_error_deg5_N100.png", dpi=300)
+plt.show()
