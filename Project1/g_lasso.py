@@ -2,7 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from imageio import imread
 from sklearn.preprocessing import StandardScaler
-from a import design_matrix, MSE_R2
+from sklearn.model_selection import train_test_split
+from a import design_matrix, MSE_R2, prep_surface
 from b import bias_variance_tradeoff
 from c import kfold
 from e import Lasso
@@ -84,3 +85,47 @@ for i, deg in enumerate(N_pol):
     plt.ylabel("MSE", fontsize=12)
     plt.savefig(f"Figures/kfold_mse_terrain_lasso_deg{deg}.png", dpi=300)
     plt.show()
+
+# make an example approximation
+# prepare data
+X = design_matrix(x, y, n=3)
+X_train, X_test, z_train, z_test = train_test_split(X, z, test_size=0.35)
+
+# preprocess data
+scaler = StandardScaler()
+scaler.fit(X_train)
+X_train = scaler.transform(X_train)
+X_test = scaler.transform(X_test)
+
+# fit
+beta, beta_var = Lasso(X_train, z_train, lambda_=1e-5, r_var=1)
+
+x_surf = np.linspace(0, terrain.shape[1], terrain.shape[1])
+y_surf = np.linspace(0, terrain.shape[0], terrain.shape[0])
+
+X_surf, Y_surf, Z_surf = prep_surface(x_surf, y_surf, beta, deg=3, scaler=scaler)
+
+fig = plt.figure()
+ax = plt.axes(projection="3d")
+ax.plot_surface(X_surf, Y_surf, Z_surf, cmap="autumn")
+ax.set_title(f"Terrain data lasso approximation,\n deg=3 and " \
+             + r"$\lambda=10^{-4}$", fontsize=15)
+ax.set_xlabel("x", fontsize=12)
+ax.set_ylabel("y", fontsize=12)
+ax.set_zlabel("z", fontsize=12)
+plt.savefig(f"Figures/terrain_lasso_deg3.png", dpi=300)
+plt.show()
+
+plt.imshow((Z_surf - terrain)**2,
+           cmap="RdYlGn", origin="lower",
+           extent=[X_surf.min(), X_surf.max(), Y_surf.min(),
+           Y_surf.max()])
+plt.title(f"Difference between prediction and true value,\n"\
+          + "deg=3 and " + r"$\lambda=10^{-4}$", fontsize=15)
+plt.xlabel("x", fontsize=12)
+plt.ylabel("y", fontsize=12)
+plt.subplots_adjust(left=0, right=0.79)
+cb = plt.colorbar()
+cb.set_label(label="Squared error", fontsize=12)
+plt.savefig(f"Figures/terrain_lasso_error_deg3.png", dpi=300)
+plt.show()

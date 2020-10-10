@@ -3,7 +3,6 @@ import matplotlib.pyplot as plt
 from imageio import imread
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
-
 from a import design_matrix, MSE_R2, prep_surface
 from b import bias_variance_tradeoff
 from c import kfold
@@ -36,7 +35,7 @@ bias_b = np.zeros([len(N_pol), len(lambdas), 2])
 var_b = np.zeros([len(N_pol), len(lambdas), 2])
 
 MSE_kfold = np.zeros([len(N_pol), len(lambdas), 2])
-
+"""
 for i, deg in enumerate(N_pol):
     # prepare data
     X = design_matrix(x, y, n=deg)
@@ -86,7 +85,7 @@ for i, deg in enumerate(N_pol):
     plt.ylabel("MSE", fontsize=12)
     plt.savefig(f"Figures/kfold_mse_terrain_ridge_deg{deg}.png", dpi=300)
     plt.show()
-
+"""
 # make an example approximation
 # prepare data
 X = design_matrix(x, y, n=4)
@@ -104,7 +103,8 @@ beta, beta_var = Ridge(X_train, z_train, lambda_=1e1, r_var=1)
 x_surf = np.linspace(0, terrain.shape[1], terrain.shape[1])
 y_surf = np.linspace(0, terrain.shape[0], terrain.shape[0])
 
-X_surf, Y_surf, Z_surf = prep_surface(x_surf, y_surf, beta, deg=4)
+X_surf, Y_surf, Z_surf = prep_surface(x_surf, y_surf, beta, deg=4,
+                                      scaler=scaler)
 
 fig = plt.figure()
 ax = plt.axes(projection="3d")
