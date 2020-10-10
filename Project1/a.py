@@ -128,7 +128,7 @@ def MSE_R2(pred, true):
 
 if __name__ == "__main__":
     # generate data
-    N_points = 25
+    N_points = 100
     x, y, z = generate_data_set(N_points, 1)
 
     # standardize response
@@ -170,7 +170,7 @@ if __name__ == "__main__":
         MSE_test[i-1], R2_test[i-1] = MSE_R2(z_hat_test, z_test)
 
         # plot an example of the approximations
-        if i == 5 or i == 10:
+        if i == 4 or i == 10:
             x_surf = np.linspace(0, 1, 100)
             y_surf = np.linspace(0, 1, 100)
 

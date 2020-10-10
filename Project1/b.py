@@ -42,7 +42,7 @@ def bias_variance_tradeoff(X, z, B, model=LinearRegression, **kwargs):
         Z_pred[boot] = X_test@beta
 
     # compute statistics (pointwise)
-    Z_diff = Z_test - Z_pred
+    # Z_diff = Z_test - Z_pred
     Z_pred_mean = np.mean(Z_pred, axis=0)
 
     Bias2_pw = np.mean(np.abs(Z_test - Z_pred_mean), axis=0)**2

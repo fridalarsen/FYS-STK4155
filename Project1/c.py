@@ -50,7 +50,7 @@ def kfold(k, X, z, model=LinearRegression, **kwargs):
 
 if __name__ == "__main__":
     # create data
-    N = 100
+    N = 25
     x, y, z = generate_data_set(N, 1)
 
     # standardize response
