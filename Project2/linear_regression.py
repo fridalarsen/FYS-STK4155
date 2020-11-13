@@ -14,8 +14,8 @@ class Ridge:
         self.penalty = penalty
 
         # set default learning parameters
-        self.a = 0.01
-        self.b = 5
+        self.a = 1e-3
+        self.b = 1e0
 
     def C(self, X, y, beta):
         """
@@ -27,7 +27,16 @@ class Ridge:
         Returns:
             C (array): cost function
         """
+        # ensure correct matrix dimesnions
+        if y.ndim == 1:
+            y = y[:,None]
+        if beta.ndim == 1:
+            beta = beta[:,None]
+
         C = ((y-X@beta).T)@(y-X@beta) + self.penalty*(beta.T)@beta
+
+        if C.ndim == 2:
+            C = C.flatten()
 
         return C
 
@@ -65,7 +74,7 @@ class Ridge:
         Returns:
             gamma (float): learning parameter for specified index
         """
-        gamma = self.a*np.exp(-self.b*j/self.n_epochs)
+        gamma = self.a / (1 + self.b*j)
 
         return gamma
 
@@ -102,12 +111,13 @@ class Ridge:
 
         self.beta = (a@(X.T))@y
 
-
     def predict(self, X):
         """
-        Predict response.
+        Use estimated coefficients to predict response.
         Arguments:
             X (array): design matrix
+        Returns:
+            y (array): response
         """
         y = X@self.beta
 

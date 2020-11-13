@@ -10,7 +10,7 @@ def gradient_descent(a0, del_f, k, N):
         k (float): learning rate
         N (int): maximum number of steps
     Returns:
-        min (float): computed minimum
+        a (float): computed minimum
     """
     a = a0
     for i in range(N):
