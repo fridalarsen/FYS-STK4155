@@ -3,75 +3,164 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix
 
 class C_regression:
+    """
+    Class containing the cost and output activation function for regression.
+    """
     @staticmethod
-    def C(y_true, y_pred):
-        C = ((y_true-y_pred).T)@(y_true-y_pred)
+    def C(y_true, y_pred, penalty=0, W=0):
+        """
+        Cost function for regression (squared loss + penalty).
+        Arguments:
+            y_true (array): observations
+            y_pred (array): predictions
+            penalty (float, optional): penalty, defaults to 0
+            W (array, optional): weigths, defaults to 0
+        Returns:
+            C (float): cost function value
+        """
+        C = 0.5*((y_true-y_pred).T)@(y_true-y_pred)
+
+        if penalty > 0:
+            for w in W:
+                C += 0.5*penalty*np.sum(w**2)
 
         return C
 
     @staticmethod
     def output_act(x):
+        """
+        Output activation for regression (identity).
+        """
         return x
 
 class C_classification:
+    """
+    Class containing the cost and output activation function for classification.
+    """
     @staticmethod
-    def C(y_true, y_pred):
-        C = -((y_true.T)@np.log(y_pred)+((1-y_true).T)@np.log(1-y_pred))
+    def C(y_true, y_pred, penalty=0, W=0):
+        """
+        Cost function for classification (cross entropy + penalty).
+        Arguments:
+            y_true (array): observed response
+            y_pred (array): predicted response
+            penalty (float, optional): penalty parameter, defaults to 0
+            W (float, optional): weight, defaults to 0
+        """
+        # fix dimensions
+        y_pred = y_pred.T
+
+        # one-hot encoding
+        y_true_ = np.zeros(y_pred.shape)
+        for i, y in enumerate(y_true.flatten()):
+            y_true_[i,y] = 1
+
+        # cost function
+        C = - np.sum(y_true_ * np.log(y_pred))
+
+        # weights penalty
+        if penalty > 0:
+            for w in W:
+                C += 0.5*penalty*np.sum(w**2)
 
         return C
 
     @staticmethod
     def output_act(x):
+        """
+        Output activation function for classification (softmax).
+        """
         a = np.exp(x-np.max(x))
         sm = a / np.sum(a, axis=0, keepdims=True)
         return sm
 
 class logit:
+    """
+    Class for the logit function.
+    """
     @staticmethod
     def f(x):
-        f = np.exp(x)/(1+np.exp(x))
+        """
+        The logit function.
+        """
+        a = np.exp(x-np.max(x))
+        f = a/(1+a)
         return f
 
     @staticmethod
     def df(x):
+        """
+        The derivative of the logit function.
+        """
         f = logit.f(x)
         df = f*(1-f)
         return df
 
 class tanh:
+    """
+    Class for the tanh function.
+    """
     @staticmethod
     def f(x):
+        """
+        The tanh function.
+        """
         f = np.tanh(x)
         return f
 
     @staticmethod
     def df(x):
+        """
+        The derivative of the tanh function.
+        """
         df = 1 - np.tanh(x)**2
         return df
 
 class id:
+    """
+    Class for the identity function.
+    """
     @staticmethod
     def f(x):
+        """
+        The identity function.
+        """
         return x
 
     @staticmethod
     def df(x):
+        """
+        The derivative of the identity function.
+        """
         id_d = np.ones(x.shape)
         return id_d
 
-def plot_confusion_matrix(y_true, y_pred, normalize=True, figtitle=None):
+
+def plot_confusion_matrix(y_true, y_pred, normalize=True, figscale=1, figtitle=None):
     """
     Function for visualising the confusion matrix.
+    Arguments:
+        y_true (array): observations
+        y_pred (array): predictions
+        normalize (bool, optional): whether the confusion matrix is to be
+                                    normalized, defaults to True
+        figscale (float, optional): parameter for scaling the figure size,
+                                    defaults to 1
+        figtitle (str, optional): figure is saved under this name if provided,
+                                  defaults to None.
     """
     c = confusion_matrix(y_true, y_pred)
     if normalize is True:
+        # normalize confusion matrix
         c = c/np.sum(c)
 
-    fig, ax = plt.subplots(figsize=(5,4.5))
-    im = ax.matshow(c, vmin=0, vmax=1, cmap="autumn_r")
+    fig, ax = plt.subplots(figsize=(figscale*5, figscale*4.5))
+    vmax = 1 if normalize else c.max()
+    im = ax.matshow(c, vmin=0, vmax=vmax, cmap="autumn_r")
     plt.colorbar(im)
+    s = "{:0.1f}" if normalize else "{:d}"
     for (i, j), z in np.ndenumerate(c):
-        ax.text(j, i, "{:0.3f}".format(z), ha="center", va="center",
+        ax.text(j, i, s.format(z), ha="center", va="center",
                 fontsize=16)
     ax.set_xlabel("Predicted", fontsize=12)
     ax.xaxis.set_label_position("top")
@@ -83,16 +172,35 @@ def plot_confusion_matrix(y_true, y_pred, normalize=True, figtitle=None):
     plt.show()
 
 class NeuralNetwork:
-    def __init__(self, n_hidden_layers, n_hidden_nodes, penalty=0, activation="logit", regression=True):
+    """
+    Class for neural network.
+    """
+    def __init__(self, n_hidden_layers, n_hidden_nodes, penalty=0,
+                 activation="logit", regression=True):
+        """
+        Arguments:
+            n_hidden_layers (int): number of hidden layers
+            n_hidden_nodes (int): number of hidden nodes
+            penalty (float, optional): penalty parameter, defaults to 0
+            activation (function, optional): activation function to use,
+                                             defaults to logit
+            regression (bool, optional): whether to perform regression (True) or
+                                         classification (False), defaults to
+                                         True
+        Raises:
+            ValueError: if the activation function given is not valid
+        """
         self.n_hidden_layers = n_hidden_layers
         self.n_hidden_nodes = n_hidden_nodes
         self.regression = regression
 
+        # set cost function
         if regression is True:
             self.C = C_regression
         else:
             self.C = C_classification
 
+        # set activation function
         if activation == "logit":
             self.act = logit
         elif activation == "tanh":
@@ -101,8 +209,8 @@ class NeuralNetwork:
             raise ValueError("Activation must be logit or tanh")
 
         # set default learning parameters
-        self.a1 = 0.01
-        self.a2 = 5
+        self.a1 = 1e-3
+        self.a2 = 1e0
 
         # set penalty
         self.penalty = penalty
@@ -111,8 +219,8 @@ class NeuralNetwork:
         """
         Change the parameters for the learning schedule.
         Arguments:
-            a (float): parameter 1
-            b (float): parameter 2
+            a1 (float): parameter 1
+            a2 (float): parameter 2
         """
         self.a1 = a1
         self.a2 = a2
@@ -125,12 +233,29 @@ class NeuralNetwork:
         Returns:
             gamma (float): learning parameter for specified index
         """
-        gamma = self.a1*np.exp(-self.a2*j/self.n_epochs)
+        gamma = self.a1 * np.exp(-self.a2*j/self.n_epochs)
 
         return gamma
 
-    def fit(self, X, y, n_minibatches, n_epochs, std_W=0.01, const_b=0.01, one_hot=False):
+    def fit(self, X, y, n_minibatches, n_epochs, std_W=0.01, const_b=0.01,
+            one_hot=False, track_cost=None):
         """
+        Fit a model to the input data using stochastic gradient descent.
+        Arguments:
+            X (array): design matrix
+            y (array): response
+            n_minibatches (int): number of minibatches in sgd
+            n_epochs (int): number of epochs
+            std_W (float, optional): standard deviation of initial W guess,
+                                     defaults to 0.01
+            const_b (float, optional): initial bias, defaults to 0.01
+            one_hot (bool, optional): whether the input is one hot encoded,
+                                      default to False
+            track_cost (tuple or None, optional): if None, the cost function
+                                                  is not tracked. If not None,
+                                                  must be on the form
+                                                  [X_test, Z_test]. Defaults to
+                                                  None.
         """
         # format inputs
         X = X if X.ndim>1 else X[:,None]
@@ -163,6 +288,9 @@ class NeuralNetwork:
         self.W.append(std_W * np.random.randn(n_targets, self.n_hidden_nodes))
         self.b.append(const_b + np.zeros((n_targets,1)))
 
+        if track_cost is not None:
+            self.cost = np.zeros(n_epochs)
+
         # training loop
         for epoch in range(0, n_epochs):
             # shuffle dataset
@@ -182,7 +310,17 @@ class NeuralNetwork:
                     self.W[j] = self.W[j] - self.gamma(epoch)*self.dC_dW[j]
                     self.b[j] = self.b[j] - self.gamma(epoch)*self.dC_db[j]
 
+            if track_cost is not None:
+                y_pred = self.predict(track_cost[0])
+                self.cost[epoch] = self.C.C(track_cost[1], y_pred,
+                                            penalty=self.penalty, W=self.W)
+
     def feed_forward(self, X):
+        """
+        Feed forward algorithm.
+        Arguments:
+            X (array): design matrix
+        """
         self.z = []
         self.y = [X]  # pre-transposed
         for layer in range(self.n_hidden_layers):
@@ -192,6 +330,11 @@ class NeuralNetwork:
         self.y.append(self.C.output_act(self.z[-1]))
 
     def backpropagation(self, y_true):
+        """
+        Perform back propagation.
+        Arguments:
+            y_true (array): observed response
+        """
         delta = [self.y[-1] - y_true]
         for i in range(self.n_hidden_layers):
             l = self.n_hidden_layers - i
@@ -210,6 +353,14 @@ class NeuralNetwork:
                 self.dC_dW[l] += self.penalty * self.W[l]
 
     def predict(self, X):
+        """
+        Perform prediction.
+        Arguments:
+            X (array): input design matrix
+        Returns:
+            y (array): predicted response (probabilities in the case of
+                       classification)
+        """
         X = X if X.ndim>1 else X[:,None]
         y = X.T
         for layer in range(self.n_hidden_layers):
@@ -221,6 +372,13 @@ class NeuralNetwork:
         return y
 
     def classify(self, X):
+        """
+        Perform classification.
+        Arguments:
+            X (array): input design matrix
+        Returns:
+            y (array): predicted output classes
+        """
         # compute probabilities
         p = self.predict(X)
 
@@ -234,34 +392,3 @@ class NeuralNetwork:
             y = y_
 
         return y
-
-if __name__ == "__main__":
-    # regression test
-    x = np.linspace(0,1,100)
-    y = np.sin(x*np.pi) + 0.15*np.random.randn(*x.shape)
-    X = np.c_[x, x**2, x**3]
-
-    NN = NeuralNetwork(2, 10, activation="tanh")
-    NN.set_learning_params(a1=0.05, a2 = 2)
-    NN.fit(X, y, 5, 1000)
-    y_pred = NN.predict(X)
-
-    plt.scatter(x, y, label="data", s=5, color="red")
-    plt.plot(x, y_pred, label="nn", color="orange")
-    plt.legend()
-    plt.show()
-
-    # classification test
-    x = np.linspace(0,1,100)
-    y = np.zeros(x.shape).astype(str)
-    y[x >= 0.0] = "a"
-    y[x > 0.33] = "b"
-    y[x > 0.66] = "c"
-    x += 0.5*np.random.randn(*x.shape)
-
-    NN = NeuralNetwork(2, 10, activation="tanh", regression=False)
-    NN.set_learning_params(a1=0.05, a2 = 2)
-    NN.fit(x, y, 5, 1000)
-    y_pred = NN.classify(x)
-
-    plot_confusion_matrix(y, y_pred)
