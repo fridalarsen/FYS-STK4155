@@ -6,4 +6,4 @@ The Project1 folder contains all material related to project 1. Contained within
 The Project2 folder contains all material related to Project 2. Contained within the folder is all programs related to the project. All figures produced by these programs are contained in the Figures folder. The Tex folder contains all files related to the report itself. 
 
 ## Project 3 
-The Project3 folder contains all material related to Project 2. Contained within the folder is all programs related to the project, complete with sample runs. All figures produced by these programs are contained in the Figures folder. The Tex folder contains all files related to the report itself. 
+The Project3 folder contains all material related to Project 3. Contained within the folder is all programs related to the project, complete with sample runs. All figures produced by these programs are contained in the Figures folder. The Tex folder contains all files related to the report itself. 
