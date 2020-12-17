@@ -15,6 +15,8 @@ data = pd.read_csv("heart_failure_data.csv")
 death = data[["DEATH_EVENT"]]
 data = data.drop("DEATH_EVENT", axis=1)
 data = data.drop("time", axis=1)
+continuous_features = ["age", "creatinine_phosphokinase", "ejection_fraction",
+                       "platelets", "serum_creatinine", "serum_sodium"]
 
 # kfold to determine optimal penalty
 penalties = np.logspace(-4, 3, 15)
@@ -29,18 +31,29 @@ accuracy_kfold = np.zeros(N)
 acc = np.zeros([len(penalties),N])
 for i, penalty in enumerate(penalties):
     model = LR(penalty="l2", C=1/float(penalty), fit_intercept=True,
-               solver="liblinear")
+               solver="newton-cg")
     for k, (train_index, test_index) in enumerate(kfold.split(data, death)):
         x_train = data.iloc[train_index]
         y_train = np.ravel(death.iloc[train_index])
         x_test = data.iloc[test_index]
         y_test = np.ravel(death.iloc[test_index])
 
-        # scale data
+        # extract continuous features
+        features_to_extract = [f for f in continuous_features if f in data]
+        x_train_cont = x_train[features_to_extract]
+        x_test_cont = x_test[features_to_extract]
+
+        # scale continuous data
         scaler = StandardScaler()
-        scaler.fit(x_train)
-        x_train = scaler.transform(x_train)
-        x_test = scaler.transform(x_test)
+        scaler.fit(x_train_cont)
+        x_train_cont = scaler.transform(x_train_cont)
+        x_test_cont = scaler.transform(x_test_cont)
+
+        # fill scaled data
+        with pd.option_context('mode.chained_assignment', None):
+            for l,f in enumerate(features_to_extract):
+                x_train.loc[:,f] = x_train_cont[:,l]
+                x_test.loc[:,f] = x_test_cont[:,l]
 
         model.fit(x_train, y_train)
         y_pred = model.predict(x_test)
@@ -86,14 +99,25 @@ for i in range(len(data.columns)):
                                            np.ravel(death),
                                            train_size=train_size,
                                            test_size=test_size)
-        # scale data
+        # extract continuous features
+        features_to_extract = [f for f in continuous_features if f in working_data]
+        X_train_cont = X_train[features_to_extract]
+        X_test_cont = X_test[features_to_extract]
+
+        # scale continuous data
         scaler = StandardScaler()
-        scaler.fit(X_train)
-        X_train = scaler.transform(X_train)
-        X_test = scaler.transform(X_test)
+        scaler.fit(X_train_cont)
+        X_train_cont = scaler.transform(X_train_cont)
+        X_test_cont = scaler.transform(X_test_cont)
+
+        # fill scaled data
+        with pd.option_context('mode.chained_assignment', None):
+            for l,f in enumerate(features_to_extract):
+                X_train.loc[:,f] = X_train_cont[:,l]
+                X_test.loc[:,f] = X_test_cont[:,l]
 
         model = LR(penalty="l2", C=1/float(best_penalty), fit_intercept=True,
-                   solver="liblinear")
+                   solver="newton-cg")
         model.fit(X_train, Z_train)
 
         Z_pred = model.predict(X_test)
@@ -136,19 +160,79 @@ train_size = 1-test_size
 X_train, X_test, Z_train, Z_test = train_test_split(data, np.ravel(death),
                                    train_size=train_size, test_size=test_size)
 
+# extract continuous features
+features_to_extract = [f for f in continuous_features if f in data]
+X_train_cont = X_train[features_to_extract]
+X_test_cont = X_test[features_to_extract]
+
+# scale continuous data
+scaler = StandardScaler()
+scaler.fit(X_train_cont)
+X_train_cont = scaler.transform(X_train_cont)
+X_test_cont = scaler.transform(X_test_cont)
+
+# fill scaled data
+with pd.option_context('mode.chained_assignment', None):
+    for l,f in enumerate(features_to_extract):
+        X_train.loc[:,f] = X_train_cont[:,l]
+        X_test.loc[:,f] = X_test_cont[:,l]
+
 model = LR(penalty="l2", C=1/float(best_penalty), fit_intercept=True,
            solver="liblinear")
 model.fit(X_train, Z_train)
 
 Z_pred = model.predict(X_test)
 
-plot_confusion_matrix(Z_test, Z_pred, normalize=True,
+plot_confusion_matrix(Z_test, Z_pred, normalize=True, ndecimals=3,
                       title="Logistic Regression Confusion Matrix",
                       savename="CM_LR")
+
+# compute final estimate of accuracy
+N = 5
+kfold = KFold(n_splits=N, shuffle=True)
+
+accuracy_kfold = np.zeros(N)
+model = LR(penalty="l2", C=1/float(best_penalty), fit_intercept=True,
+           solver="newton-cg")
+for k, (train_index, test_index) in enumerate(kfold.split(data, death)):
+    x_train = data.iloc[train_index]
+    y_train = np.ravel(death.iloc[train_index])
+    x_test = data.iloc[test_index]
+    y_test = np.ravel(death.iloc[test_index])
+
+    # extract continuous features
+    features_to_extract = [f for f in continuous_features if f in data]
+    x_train_cont = x_train[features_to_extract]
+    x_test_cont = x_test[features_to_extract]
+
+    # scale continuous data
+    scaler = StandardScaler()
+    scaler.fit(x_train_cont)
+    x_train_cont = scaler.transform(x_train_cont)
+    x_test_cont = scaler.transform(x_test_cont)
+
+    # fill scaled data
+    with pd.option_context('mode.chained_assignment', None):
+        for l,f in enumerate(features_to_extract):
+            x_train.loc[:,f] = x_train_cont[:,l]
+            x_test.loc[:,f] = x_test_cont[:,l]
+
+    model.fit(x_train, y_train)
+    y_pred = model.predict(x_test)
+
+    accuracy_kfold[k] = ACC(y_test, y_pred)
+
+print(f"Final accuracy average        = {accuracy_kfold.mean():.3f}")
+print(f"Final accuracy std. deviation = {accuracy_kfold.std():.3f}")
+
 """
 sample run:
 
 Best penalty: 0.1
 --Order of feature removal--
-['diabetes', 'platelets', 'smoking', 'sex', 'anaemia', 'creatinine_phosphokinase', 'high_blood_pressure', 'serum_sodium', 'age', 'ejection_fraction', 'serum_creatinine']
+['platelets', 'diabetes', 'serum_sodium', 'creatinine_phosphokinase', 'smoking',
+'anaemia', 'sex', 'high_blood_pressure', 'age', 'ejection_fraction',
+'serum_creatinine']
+Final accuracy average        = 0.746
+Final accuracy std. deviation = 0.041
 """

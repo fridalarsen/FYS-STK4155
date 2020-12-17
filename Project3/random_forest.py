@@ -202,8 +202,28 @@ model = RFC(n_estimators=50, max_depth=md_best, max_features=mf_best)
 model.fit(X_train, Z_train)
 Z_pred = model.predict(X_test)
 
-plot_confusion_matrix(Z_test, Z_pred, normalize=True,
+plot_confusion_matrix(Z_test, Z_pred, normalize=True, ndecimals=3,
                       title="Random Forest Confusion Matrix", savename="CM_RF")
+
+# compute final estimate of accuracy
+N = 5
+kfold = KFold(n_splits=N, shuffle=True)
+
+accuracy_kfold = np.zeros(N)
+model = RFC(n_estimators=50, max_depth=md_best, max_features=mf_best)
+for k, (train_index, test_index) in enumerate(kfold.split(data, death)):
+    x_train = data.iloc[train_index]
+    y_train = np.ravel(death.iloc[train_index])
+    x_test = data.iloc[test_index]
+    y_test = np.ravel(death.iloc[test_index])
+
+    model.fit(x_train, y_train)
+    y_pred = model.predict(x_test)
+
+    accuracy_kfold[k] = ACC(y_test, y_pred)
+
+print(f"Final accuracy average        = {accuracy_kfold.mean():.3f}")
+print(f"Final accuracy std. deviation = {accuracy_kfold.std():.3f}")
 
 """
 sample run:
@@ -224,5 +244,8 @@ serum_sodium: 0.09767476475414737
 sex: 0.023266523998380993
 smoking: 0.013041274885626602
 --Order of feature removal--
-['smoking', 'diabetes', 'anaemia', 'sex', 'high blood\npressure', 'serum\nsodium', 'CPK', 'age', 'ejection\nfraction', 'serum\ncreatinine', 'platelets']
+['smoking', 'diabetes', 'anaemia', 'sex', 'high blood pressure', 'serum sodium',
+'CPK', 'age', 'ejection fraction', 'serum creatinine', 'platelets']
+Final accuracy average        = 0.756
+Final accuracy std. deviation = 0.022
 """
