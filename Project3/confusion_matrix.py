@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix as CM
 
-def plot_confusion_matrix(Z_true, Z_pred, normalize=True,
+def plot_confusion_matrix(Z_true, Z_pred, normalize=True, ndecimals=2,
                           title="Confusion Matrix", savename=None):
     """
     Function for making and plotting the confusion matrix of a model using
@@ -25,7 +25,7 @@ def plot_confusion_matrix(Z_true, Z_pred, normalize=True,
     vmax = 1 if normalize else c.max()
     im = ax.matshow(c, vmin=0, vmax=vmax, cmap="autumn_r")
     plt.colorbar(im)
-    s = "{:0.1f}" if normalize else "{:d}"
+    s = "{:0." + str(ndecimals) + "f}" if normalize else "{:d}"
     for (i, j), z in np.ndenumerate(c):
         ax.text(j, i, s.format(z), ha="center", va="center",
                 fontsize=16)
